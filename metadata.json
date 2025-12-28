@@ -1,0 +1,7 @@
+{
+  "name": "podcast producer",
+  "description": "專為108課綱高中生設計的歷史學習工具。點選歷史事件，即刻生成兩位主持人對談的歷史Podcast，深入淺出掌握學測重點。",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
