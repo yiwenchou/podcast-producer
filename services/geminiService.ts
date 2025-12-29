@@ -6,12 +6,11 @@ let aiInstance: GoogleGenAI | null = null;
 
 const getAI = () => {
   if (!aiInstance) {
-    // 關鍵修正：使用 import.meta.env 讀取 GitHub Secret
     const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 
     if (!apiKey) {
       console.error("VITE_GEMINI_API_KEY is missing!");
-      throw new Error("GEMINI_API_KEY is missing. Please check your GitHub Secrets or .env.local file.");
+      throw new Error("GEMINI_API_KEY is missing. Please check your GitHub Secrets.");
     }
     aiInstance = new GoogleGenAI({ apiKey });
   }
@@ -66,18 +65,20 @@ export const generateScript = async (event: HistoricalEvent): Promise<DialogueIt
     - 請以 JSON 格式輸出。
   `;
 
-  const response = await getAI().models.generateContent({
-    model: 'gemini-1.5-flash',
-    contents: prompt,
-    config: {
+  // 修正：更換為確切的模型名稱版本
+  const model = getAI().getGenerativeModel({ model: "gemini-1.5-flash-latest" });
+
+  const response = await model.generateContent({
+    contents: [{ role: 'user', parts: [{ text: prompt }] }],
+    generationConfig: {
       responseMimeType: 'application/json',
       responseSchema: {
         type: Type.ARRAY,
         items: {
           type: Type.OBJECT,
           properties: {
-            speaker: { type: Type.STRING, description: '主持人姓名' },
-            text: { type: Type.STRING, description: '對話內容' }
+            speaker: { type: Type.STRING },
+            text: { type: Type.STRING }
           },
           required: ['speaker', 'text']
         }
@@ -85,7 +86,7 @@ export const generateScript = async (event: HistoricalEvent): Promise<DialogueIt
     }
   });
 
-  return JSON.parse(response.text);
+  return JSON.parse(response.response.text());
 };
 
 export const generatePodcastAudio = async (
@@ -95,33 +96,22 @@ export const generatePodcastAudio = async (
   const ttsText = script.map(item => `${item.speaker}：${item.text}`).join('\n');
   const prompt = `請將以下對話轉換成語音：\n${ttsText}`;
 
-  const response = await getAI().models.generateContent({
-    model: "gemini-2.0-flash-exp",
-    contents: [{ parts: [{ text: prompt }] }],
-    config: {
+  // 修正：更換為語音生成模型
+  const model = getAI().getGenerativeModel({ model: "gemini-2.0-flash-exp" });
+
+  const response = await model.generateContent({
+    contents: [{ role: 'user', parts: [{ text: prompt }] }],
+    generationConfig: {
       responseModalities: [Modality.AUDIO],
       speechConfig: {
-        multiSpeakerVoiceConfig: {
-          speakerVoiceConfigs: [
-            {
-              speaker: HOST_A_NAME,
-              voiceConfig: {
-                prebuiltVoiceConfig: { voiceName: 'Kore' }
-              }
-            },
-            {
-              speaker: HOST_B_NAME,
-              voiceConfig: {
-                prebuiltVoiceConfig: { voiceName: 'Puck' }
-              }
-            }
-          ]
+        voiceConfig: {
+          prebuiltVoiceConfig: { voiceName: 'Puck' }
         }
       }
     }
   });
 
-  const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+  const base64Audio = response.response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
   if (!base64Audio) {
     throw new Error('未能生成語音數據');
   }
