@@ -10,7 +10,8 @@ const getAI = () => {
     if (!apiKey) {
       throw new Error("GEMINI_API_KEY is missing. Please check your GitHub Secrets or .env.local file.");
     }
-    aiInstance = new GoogleGenAI(apiKey);
+    // API Check: Ensure correct constructor
+    aiInstance = new GoogleGenAI({ apiKey });
   }
   return aiInstance;
 };
@@ -63,9 +64,11 @@ export const generateScript = async (event: HistoricalEvent): Promise<DialogueIt
     - 請以 JSON 格式輸出。
   `;
 
-  // 使用穩定的 Flash 模型
+  // 使用穩定的 Flash 模型並強制使用 fetch 以支援瀏覽器環境
   const model = getAI().getGenerativeModel({
-    model: "gemini-1.5-flash"
+    model: "gemini-1.5-flash",
+    // @ts-ignore
+    apiClient: 'fetch'
   });
 
   const result = await model.generateContent({
@@ -96,9 +99,11 @@ export const generatePodcastAudio = async (
   const ttsText = script.map(item => `${item.speaker}：${item.text}`).join('\n');
   const prompt = `請將以下對話轉換成語音：\n${ttsText}`;
 
-  // 使用支援語音輸出的 Flash 模型
+  // 使用支援語音輸出的 Flash 模型並強制使用 fetch
   const model = getAI().getGenerativeModel({
-    model: "gemini-1.5-flash"
+    model: "gemini-1.5-flash",
+    // @ts-ignore
+    apiClient: 'fetch'
   });
 
   const response = await model.generateContent({
