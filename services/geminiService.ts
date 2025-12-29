@@ -6,6 +6,7 @@ let aiInstance: GoogleGenAI | null = null;
 
 const getAI = () => {
   if (!aiInstance) {
+    // 關鍵修正：使用 import.meta.env 讀取 GitHub Secret
     const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 
     if (!apiKey) {
