@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, Type, Modality } from "@google/genai";
 import { DialogueItem, HistoricalEvent } from "../types";
 import { HOST_A_NAME, HOST_B_NAME } from "../constants";
@@ -7,17 +6,19 @@ let aiInstance: GoogleGenAI | null = null;
 
 const getAI = () => {
   if (!aiInstance) {
-    const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
+    // 修正：在 Vite 專案中，前端必須使用 import.meta.env 來讀取變數
+    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+
     if (!apiKey) {
-      console.error("GEMINI_API_KEY is missing!");
-      throw new Error("GEMINI_API_KEY is missing. Please check your .env.local file.");
+      console.error("VITE_GEMINI_API_KEY is missing!");
+      throw new Error("GEMINI_API_KEY is missing. Please check your GitHub Secrets or .env.local file.");
     }
     aiInstance = new GoogleGenAI({ apiKey });
   }
   return aiInstance;
 };
 
-// Decoding helpers as per instructions
+// Decoding helpers
 function decodeBase64(base64: string) {
   const binaryString = atob(base64);
   const len = binaryString.length;
@@ -70,7 +71,7 @@ export const generateScript = async (event: HistoricalEvent): Promise<DialogueIt
   `;
 
   const response = await getAI().models.generateContent({
-    model: 'gemini-3-flash-preview',
+    model: 'gemini-1.5-flash',
     contents: prompt,
     config: {
       responseMimeType: 'application/json',
@@ -98,42 +99,8 @@ export const generatePodcastAudio = async (
   script: DialogueItem[],
   audioContext: AudioContext
 ): Promise<AudioBuffer> => {
-  // Format the script into a single string for the TTS model to process
   const ttsText = script.map(item => `${item.speaker}：${item.text}`).join('\n');
 
   const prompt = `請將以下對話轉換成語音：\n${ttsText}`;
 
-  const response = await getAI().models.generateContent({
-    model: "gemini-2.5-flash-preview-tts",
-    contents: [{ parts: [{ text: prompt }] }],
-    config: {
-      responseModalities: [Modality.AUDIO],
-      speechConfig: {
-        multiSpeakerVoiceConfig: {
-          speakerVoiceConfigs: [
-            {
-              speaker: HOST_A_NAME,
-              voiceConfig: {
-                prebuiltVoiceConfig: { voiceName: 'Kore' } // More mature voice
-              }
-            },
-            {
-              speaker: HOST_B_NAME,
-              voiceConfig: {
-                prebuiltVoiceConfig: { voiceName: 'Puck' } // Younger, active voice
-              }
-            }
-          ]
-        }
-      }
-    }
-  });
-
-  const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
-  if (!base64Audio) {
-    throw new Error('未能生成語音數據');
-  }
-
-  const audioData = decodeBase64(base64Audio);
-  return await decodeAudioData(audioData, audioContext, 24000, 1);
-};
+  const response =
