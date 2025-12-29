@@ -7,16 +7,15 @@ let aiInstance: GoogleGenAI | null = null;
 const getAI = () => {
   if (!aiInstance) {
     const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-
     if (!apiKey) {
-      console.error("VITE_GEMINI_API_KEY is missing!");
       throw new Error("GEMINI_API_KEY is missing. Please check your GitHub Secrets.");
     }
-    aiInstance = new GoogleGenAI({ apiKey });
+    aiInstance = new GoogleGenAI(apiKey);
   }
   return aiInstance;
 };
 
+// Decoding helpers
 function decodeBase64(base64: string) {
   const binaryString = atob(base64);
   const len = binaryString.length;
@@ -36,7 +35,6 @@ async function decodeAudioData(
   const dataInt16 = new Int16Array(data.buffer);
   const frameCount = dataInt16.length / numChannels;
   const buffer = ctx.createBuffer(numChannels, frameCount, sampleRate);
-
   for (let channel = 0; channel < numChannels; channel++) {
     const channelData = buffer.getChannelData(channel);
     for (let i = 0; i < frameCount; i++) {
@@ -65,13 +63,15 @@ export const generateScript = async (event: HistoricalEvent): Promise<DialogueIt
     - 請以 JSON 格式輸出。
   `;
 
-  // 修正：更換為確切的模型名稱版本
-  const model = getAI().getGenerativeModel({ model: "gemini-1.5-flash-latest" });
+  // 修正點：使用最穩定的模型標籤名稱
+  const model = getAI().getGenerativeModel({
+    model: "gemini-1.5-flash"
+  });
 
-  const response = await model.generateContent({
-    contents: [{ role: 'user', parts: [{ text: prompt }] }],
+  const result = await model.generateContent({
+    contents: [{ role: "user", parts: [{ text: prompt }] }],
     generationConfig: {
-      responseMimeType: 'application/json',
+      responseMimeType: "application/json",
       responseSchema: {
         type: Type.ARRAY,
         items: {
@@ -80,13 +80,13 @@ export const generateScript = async (event: HistoricalEvent): Promise<DialogueIt
             speaker: { type: Type.STRING },
             text: { type: Type.STRING }
           },
-          required: ['speaker', 'text']
+          required: ["speaker", "text"]
         }
       }
     }
   });
 
-  return JSON.parse(response.response.text());
+  return JSON.parse(result.response.text());
 };
 
 export const generatePodcastAudio = async (
@@ -96,16 +96,18 @@ export const generatePodcastAudio = async (
   const ttsText = script.map(item => `${item.speaker}：${item.text}`).join('\n');
   const prompt = `請將以下對話轉換成語音：\n${ttsText}`;
 
-  // 修正：更換為語音生成模型
-  const model = getAI().getGenerativeModel({ model: "gemini-2.0-flash-exp" });
+  // 修正點：切換到支援語音輸出的最新 Flash 模型
+  const model = getAI().getGenerativeModel({
+    model: "gemini-1.5-flash"
+  });
 
   const response = await model.generateContent({
-    contents: [{ role: 'user', parts: [{ text: prompt }] }],
+    contents: [{ role: "user", parts: [{ text: prompt }] }],
     generationConfig: {
       responseModalities: [Modality.AUDIO],
       speechConfig: {
         voiceConfig: {
-          prebuiltVoiceConfig: { voiceName: 'Puck' }
+          prebuiltVoiceConfig: { voiceName: "Puck" }
         }
       }
     }
