@@ -31,7 +31,10 @@ jobs:
         run: npm ci
 
       - name: Build
+        # 這裡加入了環境變數設定，讓打包時能讀取到 GitHub Secrets
         run: npm run build
+        env:
+          VITE_GEMINI_API_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
