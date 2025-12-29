@@ -1,4 +1,4 @@
-// force refresh deploy
+// force deployment refresh
 import { GoogleGenAI, Type, Modality } from "@google/genai";
 import { DialogueItem, HistoricalEvent } from "../types";
 import { HOST_A_NAME, HOST_B_NAME } from "../constants";
@@ -7,11 +7,11 @@ let aiInstance: GoogleGenAI | null = null;
 
 const getAI = () => {
   if (!aiInstance) {
-    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-    if (!apiKey) {
+    if (!import.meta.env.VITE_GEMINI_API_KEY) {
       throw new Error("GEMINI_API_KEY is missing. Please check your GitHub Secrets or .env.local file.");
     }
-    aiInstance = new GoogleGenAI(apiKey);
+    // Strict user request: direct read
+    aiInstance = new GoogleGenAI(import.meta.env.VITE_GEMINI_API_KEY);
   }
   return aiInstance;
 };
@@ -125,4 +125,4 @@ export const generatePodcastAudio = async (
 
   const audioData = decodeBase64(base64Audio);
   return await decodeAudioData(audioData, audioContext, 24000, 1);
-};
+}; 
