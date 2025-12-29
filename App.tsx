@@ -1,5 +1,5 @@
 
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import Header from './components/Header';
 import EventCard from './components/EventCard';
 import PodcastPlayer from './components/PodcastPlayer';
@@ -16,26 +16,31 @@ const App: React.FC = () => {
     try {
       setState(AppState.GENERATING_SCRIPT);
       setError(null);
-      
+
       // 1. Generate the script
       const script = await generateScript(event);
-      
+
       setState(AppState.GENERATING_AUDIO);
-      
+
       // 2. Generate the audio
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      const audioContext = new AudioContextClass();
       const audioBuffer = await generatePodcastAudio(script, audioContext);
-      
+
       setContent({
         event,
         script,
         audioBuffer
       });
-      
+
       setState(AppState.PLAYING);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      setError('生成 Podcast 時發生錯誤：' + (err.message || '請稍後再試。'));
+      let errorMessage = '請稍後再試。';
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      }
+      setError('生成 Podcast 時發生錯誤：' + errorMessage);
       setState(AppState.ERROR);
     }
   };
@@ -54,7 +59,7 @@ const App: React.FC = () => {
   return (
     <div className="min-h-screen pb-20 px-4 md:px-8 max-w-7xl mx-auto">
       <Header />
-      
+
       <main>
         <div className="mb-12 text-center">
           <h2 className="text-3xl font-bold text-[#5d4037] mb-4">選擇一段歷史</h2>
@@ -63,9 +68,9 @@ const App: React.FC = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {HISTORICAL_EVENTS.map((event) => (
-            <EventCard 
-              key={event.id} 
-              event={event} 
+            <EventCard
+              key={event.id}
+              event={event}
               onSelect={handleSelectEvent}
               disabled={state !== AppState.IDLE && state !== AppState.PLAYING && state !== AppState.ERROR}
             />
@@ -91,8 +96,8 @@ const App: React.FC = () => {
             <div className="flex items-center gap-3">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
               <p className="font-bold">{error}</p>
-              <button 
-                onClick={() => setState(AppState.IDLE)} 
+              <button
+                onClick={() => setState(AppState.IDLE)}
                 className="ml-auto underline font-bold"
               >
                 重試

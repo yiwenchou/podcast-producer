@@ -3,7 +3,19 @@ import { GoogleGenAI, Type, Modality } from "@google/genai";
 import { DialogueItem, HistoricalEvent } from "../types";
 import { HOST_A_NAME, HOST_B_NAME } from "../constants";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+let aiInstance: GoogleGenAI | null = null;
+
+const getAI = () => {
+  if (!aiInstance) {
+    const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
+    if (!apiKey) {
+      console.error("GEMINI_API_KEY is missing!");
+      throw new Error("GEMINI_API_KEY is missing. Please check your .env.local file.");
+    }
+    aiInstance = new GoogleGenAI({ apiKey });
+  }
+  return aiInstance;
+};
 
 // Decoding helpers as per instructions
 function decodeBase64(base64: string) {
@@ -57,7 +69,7 @@ export const generateScript = async (event: HistoricalEvent): Promise<DialogueIt
     - 請以 JSON 格式輸出。
   `;
 
-  const response = await ai.models.generateContent({
+  const response = await getAI().models.generateContent({
     model: 'gemini-3-flash-preview',
     contents: prompt,
     config: {
@@ -88,10 +100,10 @@ export const generatePodcastAudio = async (
 ): Promise<AudioBuffer> => {
   // Format the script into a single string for the TTS model to process
   const ttsText = script.map(item => `${item.speaker}：${item.text}`).join('\n');
-  
+
   const prompt = `請將以下對話轉換成語音：\n${ttsText}`;
 
-  const response = await ai.models.generateContent({
+  const response = await getAI().models.generateContent({
     model: "gemini-2.5-flash-preview-tts",
     contents: [{ parts: [{ text: prompt }] }],
     config: {

@@ -11,6 +11,9 @@ node_modules
 dist
 dist-ssr
 *.local
+.DS_Store
+*.pem
+
 
 # Editor directories and files
 .vscode/*
@@ -22,3 +25,11 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Testing
+coverage
