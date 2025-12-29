@@ -6,7 +6,6 @@ let aiInstance: GoogleGenAI | null = null;
 
 const getAI = () => {
   if (!aiInstance) {
-    // 修正：在 Vite 專案中，前端必須使用 import.meta.env 來讀取變數
     const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 
     if (!apiKey) {
@@ -18,7 +17,6 @@ const getAI = () => {
   return aiInstance;
 };
 
-// Decoding helpers
 function decodeBase64(base64: string) {
   const binaryString = atob(base64);
   const len = binaryString.length;
@@ -48,9 +46,6 @@ async function decodeAudioData(
   return buffer;
 }
 
-/**
- * Generates a podcast script based on a historical event.
- */
 export const generateScript = async (event: HistoricalEvent): Promise<DialogueItem[]> => {
   const prompt = `
     你是一位專門為台灣108課綱高中歷史學測編寫教材的專家。
@@ -92,15 +87,44 @@ export const generateScript = async (event: HistoricalEvent): Promise<DialogueIt
   return JSON.parse(response.text);
 };
 
-/**
- * Generates audio for the entire script using multi-speaker TTS.
- */
 export const generatePodcastAudio = async (
   script: DialogueItem[],
   audioContext: AudioContext
 ): Promise<AudioBuffer> => {
   const ttsText = script.map(item => `${item.speaker}：${item.text}`).join('\n');
-
   const prompt = `請將以下對話轉換成語音：\n${ttsText}`;
 
-  const response =
+  const response = await getAI().models.generateContent({
+    model: "gemini-2.0-flash-exp",
+    contents: [{ parts: [{ text: prompt }] }],
+    config: {
+      responseModalities: [Modality.AUDIO],
+      speechConfig: {
+        multiSpeakerVoiceConfig: {
+          speakerVoiceConfigs: [
+            {
+              speaker: HOST_A_NAME,
+              voiceConfig: {
+                prebuiltVoiceConfig: { voiceName: 'Kore' }
+              }
+            },
+            {
+              speaker: HOST_B_NAME,
+              voiceConfig: {
+                prebuiltVoiceConfig: { voiceName: 'Puck' }
+              }
+            }
+          ]
+        }
+      }
+    }
+  });
+
+  const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+  if (!base64Audio) {
+    throw new Error('未能生成語音數據');
+  }
+
+  const audioData = decodeBase64(base64Audio);
+  return await decodeAudioData(audioData, audioContext, 24000, 1);
+};
