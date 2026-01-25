@@ -1,5 +1,4 @@
-// Version 2.0 - Constructor Fix
-// force deployment refresh
+// CONSTRUCTION_FIX_FINAL
 import { GoogleGenAI, Type, Modality } from "@google/genai";
 import { DialogueItem, HistoricalEvent } from "../types";
 import { HOST_A_NAME, HOST_B_NAME } from "../constants";
@@ -65,7 +64,6 @@ export const generateScript = async (event: HistoricalEvent): Promise<DialogueIt
     - 請以 JSON 格式輸出。
   `;
 
-  // 使用穩定的 Flash 模型，並將 apiClient 選項放在第二個參數
   const model = getAI().getGenerativeModel(
     { model: "gemini-1.5-flash" },
     // @ts-ignore
@@ -100,7 +98,6 @@ export const generatePodcastAudio = async (
   const ttsText = script.map(item => `${item.speaker}：${item.text}`).join('\n');
   const prompt = `請將以下對話轉換成語音：\n${ttsText}`;
 
-  // 使用支援語音輸出的 Flash 模型，並將 apiClient 選項放在第二個參數
   const model = getAI().getGenerativeModel(
     { model: "gemini-1.5-flash" },
     // @ts-ignore
@@ -126,4 +123,4 @@ export const generatePodcastAudio = async (
 
   const audioData = decodeBase64(base64Audio);
   return await decodeAudioData(audioData, audioContext, 24000, 1);
-}; 
+};
