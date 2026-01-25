@@ -1,4 +1,4 @@
-// ULTRA_FINAL_STABLE_VERSION
+// ULTRA_FINAL_STABLE_VERSION_0125
 import { GoogleGenAI, Type, Modality } from "@google/genai";
 import { DialogueItem, HistoricalEvent } from "../types";
 import { HOST_A_NAME, HOST_B_NAME } from "../constants";
@@ -7,14 +7,14 @@ let aiInstance: GoogleGenAI | null = null;
 
 const getAI = () => {
   if (!aiInstance) {
-    const apiKey = String(import.meta.env.VITE_GEMINI_API_KEY || "").trim();
+    const apiKey = String(import.meta.env.VITE_GEMINI_API_KEY || "").trim().replace(/^["']|["']$/g, '');
 
     // Debug logs
     console.log("API Key exists:", !!apiKey);
     console.log("Key Length:", apiKey.length);
 
-    if (!apiKey || apiKey === "undefined") {
-      throw new Error("GEMINI_API_KEY is missing or invalid. Please check your GitHub Secrets or .env.local file.");
+    if (apiKey.length < 30) {
+      throw new Error(`GEMINI_API_KEY Invalid. Length: ${apiKey.length}. Expected at least 30.`);
     }
 
     aiInstance = new GoogleGenAI(apiKey);
