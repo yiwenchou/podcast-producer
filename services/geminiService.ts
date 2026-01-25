@@ -1,4 +1,4 @@
-// EMERGENCY_FIX_V3_CONSTRUCTOR
+// ULTRA_FINAL_STABLE_VERSION
 import { GoogleGenAI, Type, Modality } from "@google/genai";
 import { DialogueItem, HistoricalEvent } from "../types";
 import { HOST_A_NAME, HOST_B_NAME } from "../constants";
@@ -7,15 +7,16 @@ let aiInstance: GoogleGenAI | null = null;
 
 const getAI = () => {
   if (!aiInstance) {
-    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-    console.log("Key Length:", apiKey?.length);
-    if (apiKey === "undefined" || !apiKey) {
-      console.error("API Key is literally the string undefined!");
-    }
+    const apiKey = String(import.meta.env.VITE_GEMINI_API_KEY || "").trim();
+
+    // Debug logs
     console.log("API Key exists:", !!apiKey);
-    if (!apiKey) {
-      throw new Error("GEMINI_API_KEY is missing. Please check your GitHub Secrets or .env.local file.");
+    console.log("Key Length:", apiKey.length);
+
+    if (!apiKey || apiKey === "undefined") {
+      throw new Error("GEMINI_API_KEY is missing or invalid. Please check your GitHub Secrets or .env.local file.");
     }
+
     aiInstance = new GoogleGenAI(apiKey);
   }
   return aiInstance;
@@ -69,11 +70,7 @@ export const generateScript = async (event: HistoricalEvent): Promise<DialogueIt
     - 請以 JSON 格式輸出。
   `;
 
-  const model = getAI().getGenerativeModel(
-    { model: "gemini-1.5-flash" },
-    // @ts-ignore
-    { apiClient: 'fetch' }
-  );
+  const model = getAI().getGenerativeModel({ model: "gemini-1.5-flash" });
 
   const result = await model.generateContent({
     contents: [{ role: "user", parts: [{ text: prompt }] }],
@@ -103,11 +100,7 @@ export const generatePodcastAudio = async (
   const ttsText = script.map(item => `${item.speaker}：${item.text}`).join('\n');
   const prompt = `請將以下對話轉換成語音：\n${ttsText}`;
 
-  const model = getAI().getGenerativeModel(
-    { model: "gemini-1.5-flash" },
-    // @ts-ignore
-    { apiClient: 'fetch' }
-  );
+  const model = getAI().getGenerativeModel({ model: "gemini-1.5-flash" });
 
   const response = await model.generateContent({
     contents: [{ role: "user", parts: [{ text: prompt }] }],
