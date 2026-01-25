@@ -8,6 +8,9 @@ let aiInstance: GoogleGenAI | null = null;
 const getAI = () => {
   if (!aiInstance) {
     const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+    if (apiKey === "undefined" || !apiKey) {
+      console.error("API Key is literally the string undefined!");
+    }
     console.log("API Key exists:", !!apiKey);
     if (!apiKey) {
       throw new Error("GEMINI_API_KEY is missing. Please check your GitHub Secrets or .env.local file.");
