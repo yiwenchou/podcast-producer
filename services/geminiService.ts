@@ -1,4 +1,4 @@
-// CONSTRUCTION_FIX_FINAL
+// EMERGENCY_FIX_V3_CONSTRUCTOR
 import { GoogleGenAI, Type, Modality } from "@google/genai";
 import { DialogueItem, HistoricalEvent } from "../types";
 import { HOST_A_NAME, HOST_B_NAME } from "../constants";
@@ -8,6 +8,7 @@ let aiInstance: GoogleGenAI | null = null;
 const getAI = () => {
   if (!aiInstance) {
     const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+    console.log("API Key exists:", !!apiKey);
     if (!apiKey) {
       throw new Error("GEMINI_API_KEY is missing. Please check your GitHub Secrets or .env.local file.");
     }
