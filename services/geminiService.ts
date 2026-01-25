@@ -8,6 +8,7 @@ let aiInstance: GoogleGenAI | null = null;
 const getAI = () => {
   if (!aiInstance) {
     const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+    console.log("Key Length:", apiKey?.length);
     if (apiKey === "undefined" || !apiKey) {
       console.error("API Key is literally the string undefined!");
     }
