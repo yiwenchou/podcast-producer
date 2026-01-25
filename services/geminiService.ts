@@ -1,3 +1,4 @@
+// Version 2.0 - Constructor Fix
 // force deployment refresh
 import { GoogleGenAI, Type, Modality } from "@google/genai";
 import { DialogueItem, HistoricalEvent } from "../types";
@@ -7,11 +8,11 @@ let aiInstance: GoogleGenAI | null = null;
 
 const getAI = () => {
   if (!aiInstance) {
-    if (!import.meta.env.VITE_GEMINI_API_KEY) {
+    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+    if (!apiKey) {
       throw new Error("GEMINI_API_KEY is missing. Please check your GitHub Secrets or .env.local file.");
     }
-    // Strict user request: direct read
-    aiInstance = new GoogleGenAI(import.meta.env.VITE_GEMINI_API_KEY);
+    aiInstance = new GoogleGenAI(apiKey);
   }
   return aiInstance;
 };
