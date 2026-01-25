@@ -5,7 +5,7 @@ const Header: React.FC = () => {
   return (
     <header className="py-12 text-center border-b-2 border-[#8b5e3c] mb-12">
       <h1 className="text-5xl font-bold text-[#5d4037] mb-4 tracking-widest">
-        時光留聲機
+        時光留聲機 - 測試版 01
       </h1>
       <p className="text-[#8b5e3c] italic text-lg">
         —— 聽見歷史的迴響，掌握學測的脈動 ——
